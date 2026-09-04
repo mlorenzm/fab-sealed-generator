@@ -1,4 +1,4 @@
-# Try it [here](https://solaris4737.github.io/fab-sealed-generator/)
+# Try it [here](https://mlorenzm.github.io/fab-sealed-generator/)
 
 ## Credits
 
@@ -27,3 +27,15 @@ Initial implementation
 -   Tweak randomization code
 -   Implement export using query params, which FaBrary taught me via a message to [their Patreon](https://www.patreon.com/fabrary/posts)!
 -   Remove the majestic
+
+**IAR 0.1**
+
+Initial implementation, randomized commons.
+
+TODO:
+- Verify if there is at least 1 equipment per pack
+- Implement sheet distribution of commons (Levia issue, currently (4/9/26) there are only 3 shadow brute commons)
+- Verify Hero card, IAR script includes all heroes in the pool, but Fabrary only gets viserai
+- Verify if needed to manually remove Gate to i'Arathael (IAR222 is Marvel AND legal in sealed)
+- Verify ratios of marvel cards legal in sealed (allies, young heroes)
+- Remove marvel cards entirely? 
