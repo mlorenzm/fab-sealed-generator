@@ -1,6 +1,7 @@
 import { cards } from "@flesh-and-blood/cards";
 import { Rarity, Release, Type } from "@flesh-and-blood/types";
 import getRandomCard from "./getRandomCard";
+import { useState } from "react";
 
 /*
  * IAR — Usurp the Shadow Throne
@@ -36,12 +37,24 @@ import getRandomCard from "./getRandomCard";
  *   - Viserai, Between Worlds (héroe, Runeblade) + Seven Sin Nebula (arma)
  *     + Grasp of the Darknight (equipo especial)
  * Las otras variantes de estos héroes (Malice, Domina of the Dead / Viserai, the
- * Forsaken / Viserai, Usurper / Baalghor) NO están en legalFormats.Sealed, así que
- * ya vienen excluidas por el mismo filtro de arriba — no hace falta descartarlas
- * a mano.
+ * Forsaken / Viserai, Usurper / Baalghor, Omen of the End) NO están en
+ * legalFormats.Sealed, así que ya vienen excluidas por el mismo filtro de arriba —
+ * no hace falta descartarlas a mano. Baalghor en concreto es rareza "Rare" con una
+ * variante de arte "Marvel", pero como no está en Sealed/Draft para ningún formato,
+ * el propio filtro lo tira sin que haya que pensar en su pull rate.
  * Esto NO simula la probabilidad real de sacar cada héroe/arma en un sobre: se
  * añaden todos, uno de cada, para que tengas el pool completo disponible en Fabrary
  * y decidas qué héroe jugar tú.
+ *
+ * Cartas Marvel (arte alternativo full-art / cold foil de otra carta):
+ * En este paquete "Marvel" suele ser solo un tratamiento de arte alternativo de una
+ * carta que YA está incluida por su rareza normal (ej. "Become the Shadow Lord" es
+ * una majestic estándar que también tiene una versión Marvel full-art de sí misma,
+ * no es una carta aparte). Comprobado: 0 cartas del pool sealed-legal de IAR tienen
+ * "Marvel" como rareza PRINCIPAL (solo aparece en el array agregado `rarities`, que
+ * lista todos los tratamientos que ha tenido el nombre de la carta). El caso de
+ * IAR222 (Gate to i'Arathael) tampoco se cuela: es un token de rareza Promo, y los
+ * tokens ya están excluidos del pool de sobres.
  */
 
 const RATIOS = {
@@ -59,12 +72,18 @@ const iarSealedLegal = cards.filter(
     card.legalFormats.includes("Sealed"),
 );
 
-// Pool del que se sortean los sobres: fuera héroes, tokens y "Basic" (esos van a extras).
+// Pool del que se sortean los sobres: fuera héroes, tokens, "Basic" (esos van a extras),
+// y fuera las cartas que además pertenecen a Release.GEM. Esas son reprints que se
+// reparten en un producto distinto (p.ej. los 7 "Runechant of..."), no salen de un sobre
+// de IAR aunque el paquete las marque como parte de este set. OJO: esta exclusión de GEM
+// es solo para el pool de sobres — las armas de héroe (Seven Sin Nebula, Vox Necropolis)
+// también comparten set con GEM pero se quedan en `extras` porque no se sortean, son el
+// arma fija de Viserai/Malice.
 const boosterPool = iarSealedLegal.filter(
   (card) =>
     !card.types.includes(Type.Hero) &&
     !card.rarities.includes(Rarity.Token) &&
-    card.rarity !== Rarity.Basic,
+    card.rarity !== Rarity.Basic
 );
 
 const commons = boosterPool.filter((card) => card.rarity === Rarity.Common);
@@ -111,6 +130,7 @@ const getWeightedRainbowCard = () => {
 const generate = () => {
   const deck = [];
   let coldFoilPacksSeen = 0;
+  const coldFoilCards = [];
 
   for (let i = 0; i < RATIOS.packsPerSealedPool; i++) {
     for (let j = 0; j < RATIOS.equipmentCommonsPerPack; j++)
@@ -135,9 +155,11 @@ const generate = () => {
     // sustituye por una carta jugable con el ratio de rareza del pool general.
     const packHasColdFoil = Math.random() < RATIOS.coldFoilChancePerPack;
     if (packHasColdFoil) {
-      deck.push(getWeightedRainbowCard());
+      const rainbowCard = getWeightedRainbowCard();
+      deck.push(rainbowCard);
       deck.push(crackedBauble);
       coldFoilPacksSeen += 1;
+      coldFoilCards.push({ pack: i + 1, card: rainbowCard });
     } else {
       for (let j = 0; j < RATIOS.basicsPerPack; j++) deck.push(crackedBauble);
     }
@@ -155,32 +177,40 @@ const generate = () => {
 
   window.open(`https://fabrary.net/decks?${params.toString()}`, "_blank");
 
-  return coldFoilPacksSeen;
+  return { coldFoilPacksSeen, coldFoilCards };
 };
 
 export default function IAR() {
+  const [result, setResult] = useState(null);
+
+  const handleGenerate = () => {
+    const { coldFoilPacksSeen, coldFoilCards } = generate();
+    setResult({ coldFoilPacksSeen, coldFoilCards });
+  };
+
   return (
     <>
       <div id="version">
-        <span>v IAR.1</span>
+        <span>v IAR 0.2</span>
+
       </div>
       <div id="assumptions">
         <div>
           <b>Assumptions (unpublished set)</b>
         </div>
         <ul>
-          <li>8 packs</li>
+          <li>8 packs, sin héroe fijado — eliges dentro de Fabrary</li>
           <li>
             12 comunes por sobre (1 de equipo, 11 del pool común sin
-            distinguir clase) ALEATORIAS (no funciona así pero Levia tiene solo 3 comunes reveladas)
+            distinguir clase)
           </li>
           <li>1 rare slot</li>
           <li>1 rare/majestic slot (~1 majestic cada 5 sobres)</li>
           <li>2 basics (Cracked Bauble) por sobre</li>
           <li>
-            ~1/24 sobres, una basic se sustituye por una carta cold
+            ~1/24 sobres, una básica se sustituye por una carta rainbow/cold
             foil con el mismo ratio de rareza que el resto del pool (común
-            60/70, rara 9/70, majestic 1/701)
+            60/70, rara 9/70, majestic 1/70)
           </li>
           <li>
             Extra: se añaden TODOS los héroes sealed-legal + su arma + su
@@ -189,13 +219,27 @@ export default function IAR() {
           </li>
           <li>
             Legendary / Fabled / Marvel excluidos automáticamente vía
-            legalFormats.includes('Sealed')
+            legalFormats.includes('Sealed'), no por rareza a mano
           </li>
         </ul>
       </div>
-      <button type="button" onClick={generate}>
+      <button type="button" onClick={handleGenerate}>
         Generate
       </button>
+      {result && (
+        <div id="cold-foil-result">
+          {result.coldFoilPacksSeen === 0 ? (
+            <p>Sin cold foil esta vez (probabilidad por sobre: 1/24).</p>
+          ) : (
+            <p>
+              ¡Cold foil! Tocó en {result.coldFoilPacksSeen} de los 8 sobres:{" "}
+              {result.coldFoilCards
+                .map((hit) => `sobre #${hit.pack} → ${hit.card.name}`)
+                .join(", ")}
+            </p>
+          )}
+        </div>
+      )}
     </>
   );
 }
