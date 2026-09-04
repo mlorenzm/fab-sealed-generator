@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/fab-sealed-generator/static/css/main.ef19025d.css",
+    "main.js": "/fab-sealed-generator/static/js/main.40d38c2c.js",
+    "static/js/496.8ab3d605.chunk.js": "/fab-sealed-generator/static/js/496.8ab3d605.chunk.js",
+    "static/media/github-mark.svg": "/fab-sealed-generator/static/media/github-mark.6fa18895f6e6c7772cab7049f7e05f59.svg",
+    "index.html": "/fab-sealed-generator/index.html",
+    "main.ef19025d.css.map": "/fab-sealed-generator/static/css/main.ef19025d.css.map",
+    "main.40d38c2c.js.map": "/fab-sealed-generator/static/js/main.40d38c2c.js.map",
+    "496.8ab3d605.chunk.js.map": "/fab-sealed-generator/static/js/496.8ab3d605.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ef19025d.css",
+    "static/js/main.40d38c2c.js"
+  ]
+}
