@@ -37,3 +37,4 @@ TODO:
 - Implement sheet distribution of commons (Levia issue, currently (4/9/26) there are only 3 shadow brute commons)
 ~~- Verify Hero card, IAR script includes all heroes in the pool, but Fabrary only gets viserai~~
 ~~- Verify if needed to manually remove Gate to i'Arathael (IAR222 is Marvel AND legal in sealed)~~
+- IMPORTANT: when full set releases: make custom cold foil dictionary and update cold foil calculation process. Not all cards have cold foil. When cold foil (only commons and Ms apparently), what distribution do we give? 1/70 for M and 69/70 for C?
