@@ -33,7 +33,7 @@ Initial implementation
 Initial implementation, randomized commons.
 
 TODO:
-- Verify if there is at least 1 equipment per pack
+- Verify if there is at least 1 equipment per pack (IRL)
 - Implement sheet distribution of commons (Levia issue, currently (4/9/26) there are only 3 shadow brute commons)
 - Verify Hero card, IAR script includes all heroes in the pool, but Fabrary only gets viserai
 - Verify if needed to manually remove Gate to i'Arathael (IAR222 is Marvel AND legal in sealed)
