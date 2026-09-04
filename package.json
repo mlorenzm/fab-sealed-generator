@@ -1,19 +1,19 @@
 {
   "name": "fab-sealed-generator",
-  "version": "HNT.2",
+  "version": "IAR.1",
   "private": true,
   "dependencies": {
-    "@flesh-and-blood/cards": "^3.9.2",
-    "@flesh-and-blood/types": "^3.8.24",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "gh-pages": "^6.1.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@flesh-and-blood/cards": "^5.0.13",
+    "@flesh-and-blood/types": "^5.0.12",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "gh-pages": "^6.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-scripts": "5.0.1",
-    "react-select": "^5.9.0",
-    "web-vitals": "^2.1.4"
+    "react-select": "^5.10.2",
+    "web-vitals": "^6.2.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -44,6 +44,6 @@
   "homepage": "https://theblang.github.io/fab-sealed-generator",
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "prettier": "3.2.4"
+    "prettier": "3.9.6"
   }
 }
