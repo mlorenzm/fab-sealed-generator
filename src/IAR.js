@@ -1,85 +1,77 @@
-import githubMark from "./github-mark.svg";
 import { cards } from "@flesh-and-blood/cards";
 import { Rarity, Release, Type } from "@flesh-and-blood/types";
 import getRandomCard from "./getRandomCard";
-import { useState } from "react";
 
 /*
  * IAR — Usurp the Shadow Throne
  *
- * IMPORTANTE (léelo antes de tocar los números):
- * El set todavía no ha salido (primer lanzamiento: 2026-09-25), así que no existen
- * ratios de sobre confirmados públicamente por LSS/comunidad, a diferencia de HNT
- * (vídeo de Naib) o HVY. Los números de abajo son los que tú diste. La única parte
- * que SÍ pude verificar contra el paquete @flesh-and-blood/cards es el pool de cartas
- * disponible y su rareza:
- *   - 35 comunes (3 de ellas equipo: IAR161, IAR162, IAR163)
- *   - 38 raras
- *   - 17 majestics
- *   - reparto por clase MUY desigual: Brute 3, Necromancer 8, Runeblade 15, NotClassed/Generic 6
- * Por eso NO he metido slots fijos "single-class / wedge" como en HVY.js: con solo 3
- * comunes de Brute, forzar p.ej. "3 slots Brute" haría que salieran casi siempre las
- * mismas 3 cartas. En vez de eso, las 11 comunes no-equipo salen de todo el pool común
- * (sin distinguir clase). Si luego sale confirmado el desglose real por clase, es fácil
- * cambiar COMMONS_NON_EQUIPMENT por sub-pools filtrados por Class.
+ * v3: ya no fuerza un héroe. Genera 8 sobres + una sección de "extras" (todos los
+ * héroes sealed-legal con su arma y su equipamiento especial) y lo manda todo a
+ * Fabrary junto. Tú eliges el héroe dentro de Fabrary.
  *
- * Corrección a tu cálculo de ratios:
- * Con 12 comunes + 1 rara + 1 slot rara/majestic por sobre = 14 cartas "de pool" por sobre.
- * En 5 sobres (70 cartas): 60 comunes, y de los 10 huecos rara/majestic (1 fijo + 1 variable
- * por sobre) salen 9 raras y 1 majestic si el slot variable es majestic 1 de cada 5 veces.
- * Es decir: comunes 60/70, RARAS 9/70 (no 59/70, probablemente un despiste de tecleo),
- * majestic 1/70. En porcentaje: comunes ~85.7%, raras ~12.9%, majestic ~1.4%.
+ * LEGALIDAD EN LIMITADO (Legendary / Fabled / Marvel fuera):
+ * En vez de mantener una lista negra de rarezas a mano, uso el campo `legalFormats`
+ * que trae cada carta del paquete @flesh-and-blood/cards. Lo comprobé a mano contra
+ * el pool real de IAR: las 7 cartas Legendary/Fabled del set (Circlet of Eternal End,
+ * Danse Macabre, Reach of the Abyss, Arknight Shard, Soul of Existence, Usurp the
+ * Shadow Throne, y el héroe Marvel "Baalghor, Omen of the End") NO tienen 'Sealed' en
+ * su legalFormats. Filtrando por `c.legalFormats.includes('Sealed')` se caen solas,
+ * sin tener que adivinar qué rarezas están prohibidas en cada set.
+ * Ese mismo filtro, de regalo, también excluye los "Expansion slot" (reprints de
+ * otros sets insertados en el sobre): en IAR ninguno de esos 14 reprints es
+ * sealed-legal, así que no hace falta la lógica de expansionSlotMap que sí necesitaba
+ * HVY.js.
  *
- * Básicas: las 2 cartas "básicas" de cada sobre físico no se generan card-por-card porque
- * en Flesh and Blood las cartas básicas (Cracked Bauble, etc.) son legales en cualquier
- * mazo independientemente de qué sobres hayas abierto — por eso ni HNT.js ni HVY.js las
- * simulan, no cambian el pool sellado real. Aun así, como la pediste explícitamente para
- * que el "sobre" se sienta completo, la genero como Cracked Bauble x2, con 1 de cada 24
- * sobres marcando que una de ellas sería cold foil (mismo ratio base que dijiste). Al ser
- * la misma carta imprimible en múltiples sets, el identificador exacto usado da igual para
- * la legalidad del mazo; cojo el primero que trae el paquete.
+ * Comunes por clase: sigue sin haber slots fijos por clase (ver v1/v2): el reparto
+ * real es muy desigual (Brute 3, Necromancer 8, Runeblade 15, Generic/NotClassed 6),
+ * así que las 11 comunes no-equipo se sacan del pool común entero sin distinguir clase.
+ *
+ * Extras (héroes + arma + equipo especial):
+ * Los héroes, sus armas de firma y su equipo especial de precon están todos marcados
+ * con rarity "Basic" en este set (y así es en todo el juego, no es un bug de datos).
+ * Filtrando `rarity === Rarity.Basic` dentro del pool sealed-legal salen exactamente:
+ *   - Levia (héroe, Brute) + Hell Hammer (arma) + Hex Gauntlet (equipo especial)
+ *   - Malice (héroe, Necromancer) + Vox Necropolis (arma) + Appalling Bearers (equipo)
+ *     + Corrupted Corpse (acción básica de firma) + Blasmophet (token de invocación)
+ *   - Viserai, Between Worlds (héroe, Runeblade) + Seven Sin Nebula (arma)
+ *     + Grasp of the Darknight (equipo especial)
+ * Las otras variantes de estos héroes (Malice, Domina of the Dead / Viserai, the
+ * Forsaken / Viserai, Usurper / Baalghor) NO están en legalFormats.Sealed, así que
+ * ya vienen excluidas por el mismo filtro de arriba — no hace falta descartarlas
+ * a mano.
+ * Esto NO simula la probabilidad real de sacar cada héroe/arma en un sobre: se
+ * añaden todos, uno de cada, para que tengas el pool completo disponible en Fabrary
+ * y decidas qué héroe jugar tú.
  */
 
 const RATIOS = {
   packsPerSealedPool: 8,
   commonsPerPack: 12, // incluye 1 de equipo
   equipmentCommonsPerPack: 1,
-  raresPerPack: 1, // slot fijo, siempre rara
-  rareOrMajesticPerPack: 1, // slot variable
-  majesticChance: 1 / 5,
+  majesticChance: 1 / 5, // en el slot variable rara/majestic
   basicsPerPack: 2,
-  coldFoilBasicEveryNPacks: 24,
+  coldFoilChancePerPack: 1 / 24, // 1 sobre de cada 24 sustituye una básica
 };
 
-const expansionSlotIds = cards
-  .filter(
-    (card) =>
-      card.sets.includes(Release.UsurpTheShadowThrone) &&
-      card.meta?.includes("Expansion slot"),
-  )
-  .map((card) => card.setIdentifiers[0]);
-
-const iarPool = cards.filter(
+const iarSealedLegal = cards.filter(
   (card) =>
     card.sets.includes(Release.UsurpTheShadowThrone) &&
-    !expansionSlotIds.includes(card.setIdentifiers[0]),
+    card.legalFormats.includes("Sealed"),
 );
 
-// OJO: en este set los héroes tienen rarity "Basic" (es así en todo el juego, no un error
-// de datos), así que hay que sacarlos ANTES de descartar nada por rareza.
-const heroes = iarPool.filter((card) => card.types.includes(Type.Hero));
-
-// mainPool: quita héroes y tokens. Los "Basic rarity" que no son héroe (armas/equipo
-// exclusivos de precons, p.ej. Hell Hammer, Vox Necropolis) quedan fuera solos, porque
-// commons/rares/majestics se filtran por rarity exacta más abajo.
-const mainPool = iarPool.filter(
+// Pool del que se sortean los sobres: fuera héroes, tokens y "Basic" (esos van a extras).
+const boosterPool = iarSealedLegal.filter(
   (card) =>
-    !card.types.includes(Type.Hero) && !card.rarities.includes(Rarity.Token),
+    !card.types.includes(Type.Hero) &&
+    !card.rarities.includes(Rarity.Token) &&
+    card.rarity !== Rarity.Basic,
 );
 
-const commons = mainPool.filter((card) => card.rarity === Rarity.Common);
-const rares = mainPool.filter((card) => card.rarity === Rarity.Rare);
-const majestics = mainPool.filter((card) => card.rarity === Rarity.Majestic);
+const commons = boosterPool.filter((card) => card.rarity === Rarity.Common);
+const rares = boosterPool.filter((card) => card.rarity === Rarity.Rare);
+const majestics = boosterPool.filter(
+  (card) => card.rarity === Rarity.Majestic,
+);
 
 const commonsEquipment = commons.filter((card) =>
   card.types.includes(Type.Equipment),
@@ -88,22 +80,37 @@ const commonsNonEquipment = commons.filter(
   (card) => !card.types.includes(Type.Equipment),
 );
 
+// Extras: héroes + su arma + su equipo especial (todo lo "Basic" sealed-legal).
+const extras = iarSealedLegal.filter((card) => card.rarity === Rarity.Basic);
+
+const crackedBauble = cards.find((card) => card.name === "Cracked Bauble");
+
 [
   commons,
   commonsEquipment,
   commonsNonEquipment,
   rares,
   majestics,
-  heroes,
+  extras,
 ].forEach((bucket) => {
   if (bucket.length === 0) window.alert("Error: bucket missing cards");
 });
 
-const crackedBauble = cards.find((card) => card.name === "Cracked Bauble");
+// Sorteo ponderado para el cold foil: mismas probabilidades que el resto del pool
+// (60/70 común, 9/70 rara, 1/70 majestic).
+const RAINBOW_COMMON_CUTOFF = 60 / 70;
+const RAINBOW_RARE_CUTOFF = 69 / 70;
 
-const generate = (heroId) => {
+const getWeightedRainbowCard = () => {
+  const roll = Math.random();
+  if (roll < RAINBOW_COMMON_CUTOFF) return getRandomCard(commons);
+  if (roll < RAINBOW_RARE_CUTOFF) return getRandomCard(rares);
+  return getRandomCard(majestics);
+};
+
+const generate = () => {
   const deck = [];
-  let coldFoilBasicsSeen = 0;
+  let coldFoilPacksSeen = 0;
 
   for (let i = 0; i < RATIOS.packsPerSealedPool; i++) {
     for (let j = 0; j < RATIOS.equipmentCommonsPerPack; j++)
@@ -115,7 +122,7 @@ const generate = (heroId) => {
     )
       deck.push(getRandomCard(commonsNonEquipment));
 
-    deck.push(getRandomCard(rares)); // slot fijo
+    deck.push(getRandomCard(rares)); // slot fijo, siempre rara
 
     // slot variable: rara o majestic
     if (Math.random() < RATIOS.majesticChance) {
@@ -124,82 +131,69 @@ const generate = (heroId) => {
       deck.push(getRandomCard(rares));
     }
 
-    // básicas (no afectan al pool sellado real, ver comentario arriba)
-    for (let j = 0; j < RATIOS.basicsPerPack; j++) {
+    // básicas: normalmente Cracked Bauble x2, salvo ~1/24 sobres donde una se
+    // sustituye por una carta jugable con el ratio de rareza del pool general.
+    const packHasColdFoil = Math.random() < RATIOS.coldFoilChancePerPack;
+    if (packHasColdFoil) {
+      deck.push(getWeightedRainbowCard());
       deck.push(crackedBauble);
+      coldFoilPacksSeen += 1;
+    } else {
+      for (let j = 0; j < RATIOS.basicsPerPack; j++) deck.push(crackedBauble);
     }
-    coldFoilBasicsSeen += 1;
   }
 
-  const coldFoilBasicPacks = Math.floor(
-    coldFoilBasicsSeen / RATIOS.coldFoilBasicEveryNPacks,
-  );
+  // Extras: todos los héroes sealed-legal + su arma + su equipo especial, uno de cada.
+  extras.forEach((card) => deck.push(card));
 
   const params = new URLSearchParams();
   params.append("tab", "import");
   params.append("format", "Sealed");
-  params.append("cards", heroId);
   deck.forEach((card) => {
     params.append("cards", card.setIdentifiers[0]);
   });
 
   window.open(`https://fabrary.net/decks?${params.toString()}`, "_blank");
 
-  return coldFoilBasicPacks;
+  return coldFoilPacksSeen;
 };
 
 export default function IAR() {
-  const [selectedHero, setSelectedHero] = useState(
-    heroes[0]?.setIdentifiers[0] ?? "",
-  );
-
-  const handleHeroChange = (event) => {
-    setSelectedHero(event.target.value);
-  };
-
-  const runGenerate = () => {
-    generate(selectedHero);
-  };
-
   return (
     <>
       <div id="version">
         <span>v IAR.1</span>
-        <a id="fork-me" href="https://github.com/theblang/fab-sealed-generator">
-          <img src={githubMark} />
-        </a>
       </div>
       <div id="assumptions">
         <div>
-          <b>
-            Assumptions (set sin publicar, ratios sin confirmar oficialmente)
-          </b>
+          <b>Assumptions (unpublished set)</b>
         </div>
         <ul>
-          <li>8 sobres</li>
+          <li>8 packs</li>
           <li>
-            12 comunes por sobre (1 de equipo, 11 del pool común sin distinguir
-            clase)
+            12 comunes por sobre (1 de equipo, 11 del pool común sin
+            distinguir clase) ALEATORIAS (no funciona así pero Levia tiene solo 3 comunes reveladas)
           </li>
-          <li>1 rara fija</li>
-          <li>1 slot rara/majestic (~1 majestic cada 5 sobres, resto rara)</li>
+          <li>1 rare slot</li>
+          <li>1 rare/majestic slot (~1 majestic cada 5 sobres)</li>
+          <li>2 basics (Cracked Bauble) por sobre</li>
           <li>
-            2 básicas (Cracked Bauble) por sobre — no afectan al pool sellado
-            legal
+            ~1/24 sobres, una basic se sustituye por una carta cold
+            foil con el mismo ratio de rareza que el resto del pool (común
+            60/70, rara 9/70, majestic 1/701)
           </li>
-          <li>1 de cada 24 sobres, una básica sería cold foil (cosmético)</li>
+          <li>
+            Extra: se añaden TODOS los héroes sealed-legal + su arma + su
+            equipo especial (1 copia de cada), no simula probabilidad de
+            sobre, es solo para tener el pool completo
+          </li>
+          <li>
+            Legendary / Fabled / Marvel excluidos automáticamente vía
+            legalFormats.includes('Sealed')
+          </li>
         </ul>
       </div>
-      <label htmlFor="hero">Héroe:</label>
-      <select id="hero" value={selectedHero} onChange={handleHeroChange}>
-        {heroes.map((hero) => (
-          <option key={hero.setIdentifiers[0]} value={hero.setIdentifiers[0]}>
-            {hero.name} ({hero.classes.join("/")})
-          </option>
-        ))}
-      </select>
-      <br />
-      <button type="button" onClick={runGenerate}>
+      <button type="button" onClick={generate}>
         Generate
       </button>
     </>
