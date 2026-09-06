@@ -3,7 +3,7 @@
   "version": "IAR.1",
   "private": true,
   "dependencies": {
-    "@flesh-and-blood/cards": "^5.0.15",
+    "@flesh-and-blood/cards": "^5.0.22",
     "@flesh-and-blood/types": "^5.0.12",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
