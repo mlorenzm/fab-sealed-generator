@@ -17,7 +17,7 @@ const iarSealedLegal = cards.filter(
 );
 
 const boosterPool = iarSealedLegal.filter(
-    card => !card.types.includes(Type.Hero) && !card.rarities.includes(Rarity.Token) && card.rarity !== Rarity.Basic,
+    card => !card.types.includes(Type.Hero) && !card.rarities.includes(Rarity.Token) && card.rarity !== Rarity.Basic, //for some reason this cracked bauble is not a basic on Cards.tsx
 );
 
 const commons = boosterPool.filter(card => card.rarity === Rarity.Common);
@@ -36,9 +36,9 @@ const shadowCommons = commonsNonEquipment.filter(
 );
 
 // Extras: Rarity: Basic sealed legal cards
-const extras = iarSealedLegal.filter(card => card.rarity === Rarity.Basic);
+const extras = iarSealedLegal.filter(card => card.rarity === Rarity.Basic && !card.setIdentifiers.includes('IAR242'));
 
-const crackedBauble = cards.find(card => card.name === 'Cracked Bauble');
+// const crackedBauble = cards.find(card => card.name === 'Cracked Bauble');
 
 const hasIARFoiling = foiling => card =>
     card.printings.some(printing => printing.set === Release.UsurpTheShadowThrone && printing.foiling === foiling);
@@ -79,7 +79,6 @@ const getIARIdentifier = card => {
     rainbowFoilCommons,
     rainbowFoilRares,
     rainbowFoilMajestics,
-    crackedBauble,
 ].forEach(bucket => {
     if (!bucket || bucket.length === 0) window.alert('Error: bucket missing cards');
 });
@@ -156,60 +155,6 @@ const generate = () => {
     return { coldFoilPacksSeen, coldFoilCards };
 };
 
-// // OLD; DEPRECATED
-// const generate2 = () => {
-//   const deck = [];
-//   let coldFoilPacksSeen = 0;
-//   const coldFoilCards = [];
-
-//   for (let i = 0; i < RATIOS.packsPerSealedPool; i++) {
-//     for (let j = 0; j < RATIOS.equipmentCommonsPerPack; j++)
-//       deck.push(getRandomCard(commonsEquipment));
-//     for (
-//       let j = 0;
-//       j < RATIOS.commonsPerPack - RATIOS.equipmentCommonsPerPack;
-//       j++
-//     )
-//       deck.push(getRandomCard(commonsNonEquipment));
-
-//     deck.push(getRandomCard(rares)); // slot fijo, siempre rara
-
-//     // slot variable: rara o majestic
-//     if (Math.random() < RATIOS.majesticChance) {
-//       deck.push(getRandomCard(majestics));
-//     } else {
-//       deck.push(getRandomCard(rares));
-//     }
-
-//     // básicas: normalmente Cracked Bauble x2, salvo ~1/24 sobres donde una se
-//     // sustituye por una carta jugable con el ratio de rareza del pool general.
-//     const packHasColdFoil = Math.random() < RATIOS.coldFoilChancePerPack;
-//     if (packHasColdFoil) {
-//       const coldFoil = getWeightedCFCard();
-//       deck.push(coldFoil);
-//       deck.push(crackedBauble);
-//       coldFoilPacksSeen += 1;
-//       coldFoilCards.push({ pack: i + 1, card: coldFoil });
-//     } else {
-//       for (let j = 0; j < RATIOS.basicsPerPack; j++) deck.push(crackedBauble);
-//     }
-//   }
-
-//   // Extras: todos los héroes sealed-legal + su arma + su equipo especial, uno de cada.
-//   extras.forEach((card) => deck.push(card));
-
-//   const params = new URLSearchParams();
-//   params.append("tab", "import");
-//   params.append("format", "Sealed");
-//   deck.forEach((card) => {
-//     params.append("cards", card.setIdentifiers[0]);
-//   });
-
-//   window.open(`https://fabrary.net/decks?${params.toString()}`, "_blank");
-
-//   return { coldFoilPacksSeen, coldFoilCards };
-// };
-
 export default function IAR() {
     const [result, setResult] = useState(null);
 
@@ -221,7 +166,7 @@ export default function IAR() {
     return (
         <>
             <div id="version">
-                <span>v IAR 0.3</span>
+                <span>v IAR v1.0</span>
             </div>
             <div id="assumptions">
                 <div>
