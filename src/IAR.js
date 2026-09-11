@@ -7,7 +7,7 @@ const RATIOS = {
     packsPerSealedPool: 8,
     commonsPerPack: 12, // incluye 1 de equipo
     equipmentCommonsPerPack: 1,
-    majesticChance: 1/5,
+    majesticChance: 1 / 5,
     basicsPerPack: 2,
     coldFoilChancePerPack: 1 / 24, // 1 sobre de cada 24 sustituye una básica
 };
@@ -16,13 +16,6 @@ const iarSealedLegal = cards.filter(
     card => card.sets.includes(Release.UsurpTheShadowThrone) && card.legalFormats.includes('Sealed'),
 );
 
-// Pool del que se sortean los sobres: fuera héroes, tokens, "Basic" (esos van a extras),
-// y fuera las cartas que además pertenecen a Release.GEM. Esas son reprints que se
-// reparten en un producto distinto (p.ej. los 7 "Runechant of..."), no salen de un sobre
-// de IAR aunque el paquete las marque como parte de este set. OJO: esta exclusión de GEM
-// es solo para el pool de sobres — las armas de héroe (Seven Sin Nebula, Vox Necropolis)
-// también comparten set con GEM pero se quedan en `extras` porque no se sortean, son el
-// arma fija de Viserai/Malice.
 const boosterPool = iarSealedLegal.filter(
     card => !card.types.includes(Type.Hero) && !card.rarities.includes(Rarity.Token) && card.rarity !== Rarity.Basic,
 );
@@ -42,14 +35,11 @@ const shadowCommons = commonsNonEquipment.filter(
     card => card.classes.includes(Class.NotClassed) && card.talents.includes(Talent.Shadow),
 );
 
-// Extras: héroes + su arma + su equipo especial (todo lo "Basic" sealed-legal).
+// Extras: Rarity: Basic sealed legal cards
 const extras = iarSealedLegal.filter(card => card.rarity === Rarity.Basic);
 
 const crackedBauble = cards.find(card => card.name === 'Cracked Bauble');
 
-// El foiling no está en la card en sí (card.foiling es siempre undefined), sino en
-// cada printing (card.printings[]). Para saber si una carta tiene versión foil en IAR
-// hay que mirar sus printings de IAR con ese tratamiento.
 const hasIARFoiling = foiling => card =>
     card.printings.some(printing => printing.set === Release.UsurpTheShadowThrone && printing.foiling === foiling);
 
@@ -146,11 +136,8 @@ const generate = () => {
         if (packHasColdFoil) {
             const coldFoil = getWeightedFoilCard('cold');
             deck.push(coldFoil);
-            deck.push(crackedBauble);
             coldFoilPacksSeen += 1;
             coldFoilCards.push({ pack: i + 1, card: coldFoil });
-        } else {
-            for (let j = 0; j < RATIOS.basicsPerPack; j++) deck.push(crackedBauble);
         }
     }
 
@@ -241,26 +228,14 @@ export default function IAR() {
                     <b>Assumptions (unpublished set)</b>
                 </div>
                 <ul>
-                    <li>8 packs, sin héroe fijado — eliges dentro de Fabrary</li>
-                    <li>
-                        11 comunes por sobre repartidas por clase (2 Brute, 2 Necromancer, 2 Runeblade, 3 Shadow, 1
-                        wildcard) + 1 equipo común
-                    </li>
-                    <li>1 rainbow foil por sobre con ratio 60/70 común, 9/70 rara, 1/70 majestic</li>
+                    <li>8 packs</li>
+                    <li>11 commons:2 Brute, 2 Necromancer, 2 Runeblade, 3 Shadow, 1 wildcard + 1 equipment</li>
                     <li>1 rare slot</li>
                     <li>1 rare/majestic slot (~1 majestic cada 5 sobres)</li>
-                    <li>2 basics (Cracked Bauble) por sobre</li>
+                    <li>1 rainbow foil: ratio 60/70 common, 9/70 rare, 1/70 majestic</li>
                     <li>
-                        ~1/24 sobres, una básica se sustituye por una carta cold foil con el mismo ratio de rareza que
-                        el resto del pool (común 60/70, rara 9/70, majestic 1/70)
-                    </li>
-                    <li>
-                        Extra: se añaden TODOS los héroes sealed-legal + su arma + su equipo especial (1 copia de cada),
-                        no simula probabilidad de sobre, es solo para tener el pool completo
-                    </li>
-                    <li>
-                        Legendary / Fabled / Marvel excluidos automáticamente vía legalFormats.includes('Sealed'), no
-                        por rareza a mano
+                        1/24 chance per pack: cold foil with same ratio as rest of pool (common 60/70, rare 9/70,
+                        majestic 1/70)
                     </li>
                 </ul>
             </div>
@@ -270,10 +245,10 @@ export default function IAR() {
             {result && (
                 <div id="cold-foil-result">
                     {result.coldFoilPacksSeen === 0 ? (
-                        <p>Sin cold foil esta vez (probabilidad por sobre: 1/24).</p>
+                        <p>Without cold foil (1/24 chance).</p>
                     ) : (
                         <p>
-                            ¡Cold foil! Tocó en {result.coldFoilPacksSeen} de los 8 sobres:{' '}
+                            ¡Cold foil! In {result.coldFoilPacksSeen} of 8 packs:{' '}
                             {result.coldFoilCards.map(hit => `sobre #${hit.pack} → ${hit.card.name}`).join(', ')}
                         </p>
                     )}
