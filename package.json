@@ -3,8 +3,8 @@
   "version": "IAR.1",
   "private": true,
   "dependencies": {
-    "@flesh-and-blood/cards": "^5.0.30",
-    "@flesh-and-blood/types": "^5.0.27",
+    "@flesh-and-blood/cards": "^5.1.4",
+    "@flesh-and-blood/types": "^5.1.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
@@ -21,7 +21,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "npm run build && gh-pages -b deploy2 -d build"
+    "deploy": "npm run build && gh-pages -b deploy4 -d build"
   },
   "eslintConfig": {
     "extends": [
